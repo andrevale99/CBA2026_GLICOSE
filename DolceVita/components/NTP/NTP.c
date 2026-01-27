@@ -24,6 +24,12 @@ esp_err_t ntp_init(const char *ntp_server)
     return ESP_OK;
 }
 
+void ntp_deinit(void)
+{
+    ESP_LOGI(TAG, "Deinitializing NTP");
+    esp_netif_sntp_deinit();
+}
+
 esp_err_t ntp_wait_for_sync(uint32_t timeout_ms)
 {
     esp_err_t err = ESP_ERR_TIMEOUT;

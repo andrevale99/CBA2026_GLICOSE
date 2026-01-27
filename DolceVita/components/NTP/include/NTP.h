@@ -16,6 +16,7 @@
 #define NTP_RETRY_COUNT 15
 
 esp_err_t ntp_init(const char* ntp_server);
+void ntp_deinit(void);
 esp_err_t ntp_wait_for_sync(uint32_t timeout_ms);
 void ntp_get_time(struct tm* timeinfo);
 
