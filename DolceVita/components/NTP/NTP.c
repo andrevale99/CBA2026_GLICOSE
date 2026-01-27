@@ -44,9 +44,13 @@ void ntp_get_time(struct tm *_timeinfo)
 {
     ntp_wait_for_sync(2000);
     
+    // O UTC foi definido a partir da lista deste link
+    // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+    setenv("TZ", "<-03>3", 1); // Set timezone to Brasilia time zone
+    tzset();
+
     time(&now);
     localtime_r(&now, _timeinfo);
 
-    _timeinfo->tm_hour += -3; // UTC-3 for Brasilia time zone
     mktime(_timeinfo);
 }
