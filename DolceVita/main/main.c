@@ -26,6 +26,8 @@ void app_main(void)
     char strftime_buf[64];
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
     ESP_LOGI(TAG, "The current date/time is: %s", strftime_buf);
+    
+    ntp_deinit();
 
     while (1)
     {
