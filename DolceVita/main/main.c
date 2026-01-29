@@ -9,6 +9,7 @@
 
 #include "WiFi.h"
 #include "NTP.h"
+#include "ds3231.h"
 
 char *TAG = "[MAIN]";
 
@@ -16,18 +17,18 @@ struct tm timeinfo;
 
 void app_main(void)
 {
-    nvs_flash_init();
+    i2c_master_bus_config_t i2c_mst_config_1 = {
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .i2c_port = I2C_NUM_0,
+        .scl_io_num = 22,
+        .sda_io_num = 21,
+        .glitch_ignore_cnt = 7,
+        .flags.enable_internal_pullup = true,
+    };
+    i2c_master_bus_handle_t bus_handle;
+    i2c_new_master_bus(&i2c_mst_config_1, &bus_handle);
 
-    wifi_init_station();
-    ntp_init("pool.ntp.org");
-
-    ntp_get_time(&timeinfo);
-
-    char strftime_buf[64];
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time is: %s", strftime_buf);
-    
-    ntp_deinit();
+    esp_err_t ret = ds3231_init(&bus_handle, 0x68);
 
     while (1)
     {
