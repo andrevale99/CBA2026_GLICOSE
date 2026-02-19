@@ -1,20 +1,13 @@
 {
-  "C_Cpp.intelliSenseEngine": "default",
-  "idf.espIdfPath": "/home/andre/esp/v5.5.1/esp-idf",
-  "idf.pythonInstallPath": "/usr/bin/python3",
-  "idf.openOcdConfigs": [
-    "board/esp32-wrover-kit-3.3v.cfg"
-  ],
-  "idf.port": "/dev/ttyUSB0",
-  "idf.toolsPath": "/home/andre/.espressif",
-  "idf.customExtraVars": {
-    "IDF_TARGET": "esp32"
-  },
-  "clangd.path": "/home/andre/.espressif/tools/esp-clang/esp-19.1.2_20250312/esp-clang/bin/clangd",
-  "clangd.arguments": [
-    "--background-index",
-    "--query-driver=/home/andre/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc",
-    "--compile-commands-dir=${workspaceFolder}/build"
-  ],
-  "idf.flashType": "UART"
+    "idf.openOcdConfigs": [
+        "board/esp32s3-builtin.cfg"
+    ],
+    "idf.customExtraVars": {
+        "OPENOCD_SCRIPTS": "C:\\Espressif\\tools\\openocd-esp32\\v0.12.0-esp32-20240318/openocd-esp32/share/openocd/scripts",
+        "IDF_CCACHE_ENABLE": "1",
+        "ESP_ROM_ELF_DIR": "C:\\Espressif\\tools\\esp-rom-elfs\\20240305/",
+        "IDF_TARGET": "esp32s3"
+    },
+    "idf.flashType": "UART",
+    "idf.portWin": "COM3"
 }
