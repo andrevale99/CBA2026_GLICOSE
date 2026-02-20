@@ -4,7 +4,6 @@
 #include "esp_err.h"
 #include <stdbool.h>
 
-
 esp_err_t spiffs_init(void);
 
 esp_err_t spiffs_format(void);

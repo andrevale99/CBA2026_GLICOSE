@@ -34,10 +34,10 @@ typedef enum
     NTP_OFFSET_M6,  /**< UTC -06:00 */
     NTP_OFFSET_M5,  /**< UTC -05:00 */
     NTP_OFFSET_M4,  /**< UTC -04:00 */
-    NTP_OFFSET_M3,  /**< UTC -03:00 (Brasilia Time) */
+    NTP_OFFSET_M3,  /**< UTC -03:00 */
     NTP_OFFSET_M2,  /**< UTC -02:00 */
     NTP_OFFSET_M1,  /**< UTC -01:00 */
-    NTP_OFFSET_UTC, /**< UTC 00:00 (Greenwich) */
+    NTP_OFFSET_UTC, /**< UTC  00:00 */
     NTP_OFFSET_P1,  /**< UTC +01:00 */
     NTP_OFFSET_P2,  /**< UTC +02:00 */
     NTP_OFFSET_P3,  /**< UTC +03:00 */
