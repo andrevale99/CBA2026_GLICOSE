@@ -6,13 +6,22 @@
 #include "sdmmc_cmd.h"
 
 #include "esp_err.h"
+#include "esp_vfs_fat.h"
 #include "esp_log.h"
 
+#define MOUNT_POINT "/sdcard"
+
 typedef struct {
+    int mosi_pin;
+    int miso_pin;
+    int sclk_pin;
+    int cs_pin;
+
+    sdmmc_host_t host;
 
 } sd_manager_config_t;
 
-esp_err_t sd_init(void);
+esp_err_t sd_init(sd_manager_config_t *config);
 
 esp_err_t sd_format(void);
 
