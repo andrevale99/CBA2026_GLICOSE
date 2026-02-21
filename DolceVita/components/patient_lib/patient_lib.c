@@ -8,6 +8,16 @@
 
 static const char *TAG = "[PATIENT_LIB]";
 
+/**
+ * @brief Compute SHA-256 hash of the patient structure.
+ *
+ * @param[in]  p       Pointer to constant patient structure.
+ * @param[out] output  Buffer (32 bytes) that receives the SHA-256 digest.
+ *
+ * @retval - ESP_OK               Hash computed successfully.
+ * @retval - ESP_ERR_INVALID_ARG  Null pointer provided.
+ * @retval - ESP_FAIL             mbedTLS internal failure.
+ */
 static esp_err_t compute_sha256(const patient_t *p, unsigned char *output)
 {
     if (!p || !output)
