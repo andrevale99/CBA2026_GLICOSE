@@ -1,6 +1,7 @@
-#include "patient.h"
+#include "patient_lib.h"
 #include "mbedtls/sha256.h"
 #include <string.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "esp_log.h"
@@ -14,9 +15,9 @@ static const char *TAG = "[PATIENT_LIB]";
  * @param[in]  p       Pointer to constant patient structure.
  * @param[out] output  Buffer (32 bytes) that receives the SHA-256 digest.
  *
- * @retval - ESP_OK               Hash computed successfully.
- * @retval - ESP_ERR_INVALID_ARG  Null pointer provided.
- * @retval - ESP_FAIL             mbedTLS internal failure.
+ * @retval ESP_OK               Hash computed successfully.
+ * @retval ESP_ERR_INVALID_ARG  Null pointer provided.
+ * @retval ESP_FAIL             mbedTLS internal failure.
  */
 static esp_err_t compute_sha256(const patient_t *p, unsigned char *output)
 {
@@ -26,19 +27,22 @@ static esp_err_t compute_sha256(const patient_t *p, unsigned char *output)
     mbedtls_sha256_context ctx;
     mbedtls_sha256_init(&ctx);
 
-    if (mbedtls_sha256_starts(&ctx, 0) != 0)
+    int ret = mbedtls_sha256_starts(&ctx, 0);
+    if (ret != 0)
     {
         mbedtls_sha256_free(&ctx);
         return ESP_FAIL;
     }
 
-    if (mbedtls_sha256_update(&ctx, (const unsigned char *)p, offsetof(patient_t, hash)) != 0)
+    ret = mbedtls_sha256_update(&ctx, (const unsigned char *)p, offsetof(patient_t, hash));
+    if (ret != 0)
     {
         mbedtls_sha256_free(&ctx);
         return ESP_FAIL;
     }
 
-    if (mbedtls_sha256_finish(&ctx, output) != 0)
+    ret = mbedtls_sha256_finish(&ctx, output);
+    if (ret != 0)
     {
         mbedtls_sha256_free(&ctx);
         return ESP_FAIL;
@@ -47,7 +51,6 @@ static esp_err_t compute_sha256(const patient_t *p, unsigned char *output)
     mbedtls_sha256_free(&ctx);
     return ESP_OK;
 }
-
 esp_err_t patient_save(patient_t *p, const storage_driver_t *driver)
 {
     if (!p || !driver || !driver->write || !driver->read)
@@ -90,12 +93,13 @@ esp_err_t patient_load(uint32_t id, patient_t *p, const storage_driver_t *driver
     char filename[32];
     snprintf(filename, sizeof(filename), "p_%lu.bin", (unsigned long)id);
 
-    char *buffer = NULL;
+    void *buffer = NULL;
     size_t size = 0;
 
-    if (driver->read(filename, &buffer, &size) != ESP_OK)
+    esp_err_t err = driver->read(filename, &buffer, &size);
+    if (err != ESP_OK)
     {
-        return ESP_ERR_NOT_FOUND;
+        return err;
     }
 
     if (size < sizeof(patient_t))
