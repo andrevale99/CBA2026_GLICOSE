@@ -23,4 +23,7 @@
 #define SPIFFS_FULL_PATH_SIZE 64
 #define WIFI_CRED_FILE "/spiffs/wifi_creds.txt"
 
+
+#define PATIENT_DATA_DIR "/spiffs/patients"
+
 #endif // _CONFIG_H

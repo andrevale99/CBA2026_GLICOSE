@@ -11,9 +11,6 @@
 #include "wifi_lib.h"
 #include "NTP.h"
 
-#include "patient_lib.h"
-#include "spiffs_manager.h"
-
 static const char *TAG = "[MAIN]";
 
 ntp_config_t ntp_settings = {
@@ -23,12 +20,6 @@ ntp_config_t ntp_settings = {
     .is_initialized = false};
 
 struct tm timeinfo;
-
-static const storage_driver_t spiffs_driver = {
-    .write = (storage_write_fn)spiffs_write_file,
-    .read = (storage_read_fn)spiffs_read_file,
-    .del = (storage_delete_fn)spiffs_delete_file,
-};
 
 void app_main(void)
 {
@@ -67,21 +58,6 @@ void app_main(void)
     }
 
     ESP_ERROR_CHECK(ntp_deinit(&ntp_settings));
-
-    // ESP_LOGI(TAG, "=====Test Patient Library... =====");
-
-    // ESP_ERROR_CHECK(spiffs_init());
-
-    // patient_t p = {0};
-    // p.id = 42;
-    // strcpy(p.sensor_serial, "ABC123456");
-
-    // ESP_ERROR_CHECK(patient_save(&p, &spiffs_driver));
-
-    // patient_t loaded = {0};
-    // ESP_ERROR_CHECK(patient_load(42, &loaded, &spiffs_driver));
-
-    // ESP_LOGI(TAG, "Loaded serial: %s", loaded.sensor_serial);
 
     while (1)
     {
