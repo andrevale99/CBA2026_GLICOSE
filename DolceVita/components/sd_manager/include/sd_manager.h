@@ -43,7 +43,7 @@ typedef struct {
  *      - ESP_FAIL: Falha ao montar o sistema de arquivos.
  *      - Outro código esp_err_t: Falha na inicialização do barramento SPI.
  */
-esp_err_t sd_init(sd_manager_config_t *config);
+esp_err_t sd_init(sd_manager_config_t *sd);
 
 /**
  * @brief Desmonta o sistema de arquivos do cartão SD e libera o barramento SPI.
@@ -56,20 +56,21 @@ esp_err_t sd_init(sd_manager_config_t *config);
  * @return
  *      - ESP_OK: Desinicialização realizada com sucesso.
  */
-esp_err_t sd_deinit(sd_manager_config_t *config);
+esp_err_t sd_deinit(sd_manager_config_t *sd);
 
 /**
- *  VER COM ZE SOBRE ISSO
- * 
- * @brief Formata o cartão SD.
+ * @brief Executa a formatação (apagamento completo) do cartão SD.
  *
- * Atualmente esta função é apenas um placeholder e retorna sucesso
- * sem executar nenhuma operação de formatação.
+ * Realiza o apagamento completo do cartão utilizando a API do driver SDMMC.
+ *
+ * @param[in] sd Ponteiro para a estrutura de configuração do gerenciador SD,
+ *               que deve conter o campo `card` previamente inicializado.
  *
  * @return
- *      - ESP_OK: Operação concluída.
+ *      - ESP_OK: Formatação realizada com sucesso.
+ *      - Outro código esp_err_t: Falha durante o processo de apagamento.
  */
-esp_err_t sd_format(void);
+esp_err_t sd_format(sd_manager_config_t *sd);
 
 /**
  * @brief Lê uma linha de um arquivo no cartão SD.
@@ -85,7 +86,7 @@ esp_err_t sd_format(void);
  *      - ESP_OK: Leitura realizada com sucesso.
  *      - ESP_FAIL: Falha ao abrir o arquivo.
  */
-esp_err_t sd_read_file(sd_manager_config_t *config, const char *filename, char *buffer);
+esp_err_t sd_read_file(sd_manager_config_t *sd, const char *filename, char *buffer);
 
 /**
  * @brief Escreve dados em um arquivo no cartão SD.
@@ -101,7 +102,7 @@ esp_err_t sd_read_file(sd_manager_config_t *config, const char *filename, char *
  *      - ESP_OK: Escrita realizada com sucesso.
  *      - ESP_FAIL: Falha ao abrir o arquivo.
  */
-esp_err_t sd_write_file(sd_manager_config_t *config, const char *filename, const char *data);
+esp_err_t sd_write_file(sd_manager_config_t *sd, const char *filename, const char *data);
 
 /**
  * @brief Remove um arquivo do cartão SD.
@@ -113,7 +114,7 @@ esp_err_t sd_write_file(sd_manager_config_t *config, const char *filename, const
  *      - ESP_OK: Arquivo removido com sucesso.
  *      - ESP_FAIL: Falha ao remover o arquivo.
  */
-esp_err_t sd_delete_file(sd_manager_config_t *config, const char *filename);
+esp_err_t sd_delete_file(sd_manager_config_t *sd, const char *filename);
 
 /**
  * @brief Verifica se um arquivo existe no cartão SD.
@@ -127,6 +128,6 @@ esp_err_t sd_delete_file(sd_manager_config_t *config, const char *filename);
  *      - true: O arquivo existe.
  *      - false: O arquivo não existe.
  */
-bool sd_file_exists(sd_manager_config_t *config, const char *filename);
+bool sd_file_exists(sd_manager_config_t *sd, const char *filename);
 
 #endif

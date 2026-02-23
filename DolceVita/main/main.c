@@ -58,12 +58,5 @@ void app_main(void)
 
         ESP_LOGI(TAG, "Checking if file exists: %s", sd_file_exists(&sd_config, file_hello) ? "Yes" : "No");
         vTaskDelay(pdMS_TO_TICKS(1000));
-
-        if(sd_delete_file(&sd_config, file_hello) == ESP_OK)
-        {
-            ESP_LOGI(TAG, "File deleted successfully");
-            cont = 0;
-        }
-
     }
 }
