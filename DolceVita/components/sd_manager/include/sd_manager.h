@@ -11,6 +11,8 @@
 
 #define MOUNT_POINT "/sdcard"
 
+#define SD_MAX_BUFFER_SIZE 1024
+
 typedef struct {
     int mosi_pin;
     int miso_pin;
@@ -19,13 +21,15 @@ typedef struct {
 
     sdmmc_host_t host;
 
+    sdmmc_card_t *card;
+
 } sd_manager_config_t;
 
 esp_err_t sd_init(sd_manager_config_t *config);
 
 esp_err_t sd_format(void);
 
-esp_err_t sd_read_file(const char *filename, char **buffer, size_t *length);
+esp_err_t sd_read_file(const char *filename, char *buffer);
 
 esp_err_t sd_write_file(const char *filename, const char *data, size_t length);
 

@@ -9,7 +9,7 @@ esp_err_t sd_init(sd_manager_config_t *config)
         .format_if_mount_failed = false,
         .max_files = 2,
         .allocation_unit_size = 16 * 1024};
-    sdmmc_card_t *card;
+    
     const char mount_point[] = MOUNT_POINT;
 
     ESP_LOGI(TAG, "Initializing SD card");
@@ -40,7 +40,7 @@ esp_err_t sd_init(sd_manager_config_t *config)
     slot_config.host_id = config->host.slot;
 
     ESP_LOGI(TAG, "Mounting filesystem");
-    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &(config->card));
 
     if (ret != ESP_OK)
     {
@@ -50,7 +50,7 @@ esp_err_t sd_init(sd_manager_config_t *config)
     ESP_LOGI(TAG, "Filesystem mounted");
 
     // Card has been initialized, print its properties
-    sdmmc_card_print_info(stdout, card);
+    sdmmc_card_print_info(stdout, config->card);
 
     return ESP_OK;
 }
@@ -60,8 +60,26 @@ esp_err_t sd_format(void)
     return ESP_OK;
 }
 
-esp_err_t sd_read_file(const char *filename, char **buffer, size_t *length)
+esp_err_t sd_read_file(const char *filename, char *buffer)
 {
+    ESP_LOGI(TAG, "Reading file %s", filename);
+    FILE *f = fopen(filename, "r");
+    if (f == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to open file for reading");
+        return ESP_FAIL;
+    }
+    fgets(buffer, SD_MAX_BUFFER_SIZE, f);
+    fclose(f);
+
+    // strip newline
+    char *pos = strchr(buffer, '\n');
+    if (pos)
+    {
+        *pos = '\0';
+    }
+    ESP_LOGI(TAG, "Read from file: '%s'", buffer);
+
     return ESP_OK;
 }
 
