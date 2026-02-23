@@ -23,18 +23,20 @@ typedef struct {
 
     sdmmc_card_t *card;
 
+    FILE *file;
+
 } sd_manager_config_t;
 
 esp_err_t sd_init(sd_manager_config_t *config);
 
 esp_err_t sd_format(void);
 
-esp_err_t sd_read_file(const char *filename, char *buffer);
+esp_err_t sd_read_file(sd_manager_config_t *config, const char *filename, char *buffer);
 
-esp_err_t sd_write_file(const char *filename, const char *data, size_t length);
+esp_err_t sd_write_file(sd_manager_config_t *config, const char *filename, const char *data);
 
-esp_err_t sd_delete_file(const char *filename);
+esp_err_t sd_delete_file(sd_manager_config_t *config, const char *filename);
 
-bool sd_file_exists(const char *filename);
+bool sd_file_exists(sd_manager_config_t *config, const char *filename);
 
 #endif

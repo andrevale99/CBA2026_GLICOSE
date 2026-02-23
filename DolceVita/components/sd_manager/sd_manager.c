@@ -60,17 +60,17 @@ esp_err_t sd_format(void)
     return ESP_OK;
 }
 
-esp_err_t sd_read_file(const char *filename, char *buffer)
+esp_err_t sd_read_file(sd_manager_config_t *config, const char *filename, char *buffer)
 {
     ESP_LOGI(TAG, "Reading file %s", filename);
-    FILE *f = fopen(filename, "r");
-    if (f == NULL)
+    config->file = fopen(filename, "r");
+    if (config->file == NULL)
     {
         ESP_LOGE(TAG, "Failed to open file for reading");
         return ESP_FAIL;
     }
-    fgets(buffer, SD_MAX_BUFFER_SIZE, f);
-    fclose(f);
+    fgets(buffer, SD_MAX_BUFFER_SIZE, config->file);
+    fclose(config->file);
 
     // strip newline
     char *pos = strchr(buffer, '\n');
@@ -83,28 +83,41 @@ esp_err_t sd_read_file(const char *filename, char *buffer)
     return ESP_OK;
 }
 
-esp_err_t sd_write_file(const char *filename, const char *data, size_t length)
+esp_err_t sd_write_file(sd_manager_config_t *config, const char *filename, const char *data)
 {
     ESP_LOGI(TAG, "Opening file %s", filename);
-    FILE *f = fopen(filename, "w");
-    if (f == NULL)
+    config->file = fopen(filename, "a");
+    if (config->file == NULL)
     {
         ESP_LOGE(TAG, "Failed to open file for writing");
         return ESP_FAIL;
     }
-    fprintf(f, data);
-    fclose(f);
+    fprintf(config->file, data);
+    fclose(config->file);
     ESP_LOGI(TAG, "File written");
 
     return ESP_OK;
 }
 
-esp_err_t sd_delete_file(const char *filename)
+esp_err_t sd_delete_file(sd_manager_config_t *config, const char *filename)
 {
+    ESP_LOGI(TAG, "Deleting file %s", filename);
+    if (remove(filename) != 0)
+    {
+        ESP_LOGE(TAG, "Failed to delete file");
+        return ESP_FAIL;
+    }
     return ESP_OK;
 }
 
-bool sd_file_exists(const char *filename)
+bool sd_file_exists(sd_manager_config_t *config, const char *filename)
 {
+    ESP_LOGI(TAG, "Checking if file %s exists", filename);
+    config->file = fopen(filename, "r");
+    if (config->file)
+    {
+        fclose(config->file);
+        return true;
+    }
     return false;
 }

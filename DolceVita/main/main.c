@@ -43,7 +43,7 @@ void app_main(void)
         const char *file_hello = MOUNT_POINT "/hello.txt";
         char data[SD_MAX_BUFFER_SIZE];
         snprintf(data, SD_MAX_BUFFER_SIZE, "%s %s %i!\n", "Hello", sd_config.card->cid.name, cont);
-        ret = sd_write_file(file_hello, data, sizeof(data));
+        ret = sd_write_file(&sd_config, file_hello, data);
         if (ret != ESP_OK)
         {
             ESP_LOGE(TAG, "Failed to write file: %s", esp_err_to_name(ret));
@@ -53,8 +53,17 @@ void app_main(void)
         cont++;
         vTaskDelay(pdMS_TO_TICKS(1000));
 
-        sd_read_file(file_hello, data);
-
+        sd_read_file(&sd_config, file_hello, data);
         vTaskDelay(pdMS_TO_TICKS(1000));
+
+        ESP_LOGI(TAG, "Checking if file exists: %s", sd_file_exists(&sd_config, file_hello) ? "Yes" : "No");
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
+        if(sd_delete_file(&sd_config, file_hello) == ESP_OK)
+        {
+            ESP_LOGI(TAG, "File deleted successfully");
+            cont = 0;
+        }
+
     }
 }
