@@ -55,6 +55,19 @@ esp_err_t sd_init(sd_manager_config_t *config)
     return ESP_OK;
 }
 
+esp_err_t sd_deinit(sd_manager_config_t *config)
+{
+    ESP_LOGI(TAG, "Unmounting filesystem");
+    esp_vfs_fat_sdmmc_unmount();
+    ESP_LOGI(TAG, "Filesystem unmounted");
+
+    ESP_LOGI(TAG, "Deinitializing bus");
+    spi_bus_free(config->host.slot);
+    ESP_LOGI(TAG, "Bus deinitialized");
+
+    return ESP_OK;
+}
+
 esp_err_t sd_format(void)
 {
     return ESP_OK;

@@ -29,6 +29,8 @@ typedef struct {
 
 esp_err_t sd_init(sd_manager_config_t *config);
 
+esp_err_t sd_deinit(sd_manager_config_t *config);
+
 esp_err_t sd_format(void);
 
 esp_err_t sd_read_file(sd_manager_config_t *config, const char *filename, char *buffer);
