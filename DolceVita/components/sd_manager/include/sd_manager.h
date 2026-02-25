@@ -9,6 +9,8 @@
 #include "esp_vfs_fat.h"
 #include "esp_log.h"
 
+#include <string.h>
+
 #define MOUNT_POINT "/sdcard"
 
 #define SD_MAX_BUFFER_SIZE 1024
