@@ -64,6 +64,11 @@ extern "C"
     esp_err_t ihm_50c_init(ihm_50c_t *ctx);
     esp_err_t ihm_50c_deinit(ihm_50c_t *ctx);
 
+    esp_err_t ihm_50c_set_brightness(ihm_50c_t *ctx, uint8_t level_percent);
+
+    esp_err_t ihm_50c_touch_is_pressed(ihm_50c_t *ctx);
+    esp_err_t ihm_50c_touch_get_coords(ihm_50c_t *ctx, uint16_t *x, uint16_t *y);
+
 #ifdef __cplusplus
 }
 #endif
