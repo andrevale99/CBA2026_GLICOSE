@@ -9,6 +9,8 @@
 #include "ihm_50c.h"
 #include "config.h"
 
+#include "demos/lv_demos.h"
+
 static const char *TAG = "APP_MAIN";
 
 static ihm_50c_t *ihm_device = NULL;
@@ -26,7 +28,7 @@ void ui_monitor_task(void *arg)
 {
     ihm_50c_t *ctx = (ihm_50c_t *)arg;
 
-    ihm_50c_set_brightness(ctx, 80);
+    ihm_50c_set_brightness(ctx, 10);
 
     ESP_LOGI(TAG, "Iniciando monitoramento de toque bruto...");
 
@@ -49,9 +51,7 @@ void ui_monitor_task(void *arg)
 
 void app_main(void)
 {
-    ihm_device = (ihm_50c_t *)calloc(1, 1024);
-    if (!ihm_device)
-        return;
+    ihm_device = ihm_50c_create();
 
     ihm_50c_backlight_cfg_t bl_cfg = {
         .pin_backlight = GPIO_NUM_2,
@@ -90,4 +90,8 @@ void app_main(void)
     {
         ESP_LOGE(TAG, "Falha crítica na inicialização.");
     }
+
+    // lv_lock();
+    // lv_demo_widgets();
+    // lv_unlock();
 }

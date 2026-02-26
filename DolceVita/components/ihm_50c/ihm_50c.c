@@ -88,15 +88,19 @@ static void touchpad_read_cb(lv_indev_t *indev, lv_indev_data_t *data)
     ESP_LOGI(TAG, "Touch cnt=%d", touchpad_cnt);
 }
 
+static void lvgl_tick(void *arg)
+{
+    lv_tick_inc(LVGL_TICK_PERIOD_MS);
+}
+
 static inline uint16_t map(uint16_t n, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max)
 {
     return (n - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-static void process_coordinates(esp_lcd_touch_handle_t tp, uint16_t *x, uint16_t *y, uint16_t *strength, uint8_t *point_num, uint8_t max_point_num)
+ihm_50c_t *ihm_50c_create(void)
 {
-
-    ESP_LOGI(TAG, "Processed coordinates: x=%d, y=%d", *x, *y);
+    return calloc(1, sizeof(ihm_50c_t));
 }
 
 esp_err_t ihm_50c_backlight_config(ihm_50c_t *ctx,
@@ -164,6 +168,8 @@ esp_err_t ihm_50c_init(ihm_50c_t *ctx)
         ESP_LOGW(TAG, "Already initialized");
         return ESP_OK;
     }
+    void *buf1 = NULL;
+    void *buf2 = NULL;
 
     ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, ctx->cfg.backlight.pwm_channel, ctx->cfg.backlight.pwm_duty));
     ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, ctx->cfg.backlight.pwm_channel));
@@ -319,8 +325,23 @@ esp_err_t ihm_50c_init(ihm_50c_t *ctx)
     lv_indev_set_read_cb(ctx->touch_indev, touchpad_read_cb);
 
 #if DISPLAY_DOUBLE_FB
+#if DISPLAY_DOUBLE_FB_TEARING
     const esp_lcd_rgb_panel_event_callbacks_t cbs = {
         .on_vsync = lvgl_port_flush_vsync_ready_callback,
+    };
+    ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(ctx->panel_handle, &cbs, ctx));
+#endif
+
+    ESP_ERROR_CHECK(esp_lcd_rgb_panel_get_frame_buffer(ctx->panel_handle, 2, &buf1, &buf2));
+    lv_display_set_buffers(ctx->disp, buf1, buf2, ctx->cfg.display.width * ctx->cfg.display.height * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_DIRECT);
+
+#else
+    size_t buffer_size = ctx->cfg.display.width * 30 * sizeof(lv_color_t);
+    // buf1 = esp_lcd_rgb_alloc_draw_buffer(ctx->panel_handle, buffer_size, 0); // Future use, currently not in release
+    buf1 = heap_caps_malloc(buffer_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    lv_display_set_buffers(ctx->disp, buf1, buf2, buffer_size, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    const esp_lcd_rgb_panel_event_callbacks_t cbs = {
+        .on_color_trans_done = lvgl_port_flush_ready,
     };
     ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(ctx->panel_handle, &cbs, ctx));
 #endif

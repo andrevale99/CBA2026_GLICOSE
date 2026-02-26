@@ -6,6 +6,7 @@
 #include "esp_err.h"
 #include "driver/i2c_master.h"
 #include "esp_timer.h"
+#include "lvgl.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -57,6 +58,7 @@ extern "C"
         bool initialized : 1;
     } ihm_50c_state_t;
 
+    ihm_50c_t *ihm_50c_create(void);
     esp_err_t ihm_50c_backlight_config(ihm_50c_t *ctx, const ihm_50c_backlight_cfg_t *cfg);
     esp_err_t ihm_50c_touch_config(ihm_50c_t *ctx, const ihm_50c_touch_cfg_t *cfg);
     esp_err_t ihm_50c_display_config(ihm_50c_t *ctx, const ihm_50c_display_cfg_t *cfg);
