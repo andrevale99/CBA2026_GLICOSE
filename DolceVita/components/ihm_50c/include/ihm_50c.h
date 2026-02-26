@@ -71,8 +71,8 @@ extern "C"
     bool ihm_50c_touch_is_pressed(ihm_50c_t *ctx);
     esp_err_t ihm_50c_touch_get_coords(ihm_50c_t *ctx, uint16_t *x, uint16_t *y);
 
-    esp_lcd_panel_handle_t ihm_50c_get_panel(ihm_50c_t *ctx);
-    esp_lcd_touch_handle_t ihm_50c_get_touch(ihm_50c_t *ctx);
+    esp_lcd_panel_handle_t ihm_50c_get_panel_handle(ihm_50c_t *ctx);
+    esp_lcd_touch_handle_t ihm_50c_get_touch_handle(ihm_50c_t *ctx);
 
 #ifdef __cplusplus
 }

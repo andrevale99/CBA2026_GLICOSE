@@ -421,3 +421,13 @@ bool ihm_50c_touch_is_pressed(ihm_50c_t *ctx)
     uint16_t x, y;
     return (ihm_50c_touch_get_coords(ctx, &x, &y) == ESP_OK);
 }
+
+esp_lcd_panel_handle_t ihm_50c_get_panel_handle(ihm_50c_t *ctx)
+{
+    return ctx->panel_handle;
+}
+
+esp_lcd_touch_handle_t ihm_50c_get_touch_handle(ihm_50c_t *ctx)
+{
+    return ctx->touch_handle;
+}
