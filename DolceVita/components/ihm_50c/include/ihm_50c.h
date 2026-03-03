@@ -71,6 +71,11 @@ extern "C"
     bool ihm_50c_touch_is_pressed(ihm_50c_t *ctx);
     esp_err_t ihm_50c_touch_get_coords(ihm_50c_t *ctx, uint16_t *x, uint16_t *y);
 
+    esp_err_t ihm_50c_draw_bitmap(ihm_50c_t *ctx, int x_start, int y_start, int x_end, int y_end, const void *color_data);
+
+    esp_err_t ihm_50c_draw_test_pattern(ihm_50c_t *ctx);
+    esp_err_t ihm_50c_draw_checkerboard(ihm_50c_t *ctx);
+
     esp_lcd_panel_handle_t ihm_50c_get_panel_handle(ihm_50c_t *ctx);
     esp_lcd_touch_handle_t ihm_50c_get_touch_handle(ihm_50c_t *ctx);
 

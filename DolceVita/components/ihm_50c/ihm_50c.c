@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ihm_50c.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_err.h"
 
 #include "esp_lcd_panel_rgb.h"
 #include "esp_lcd_touch_gt911.h"
@@ -26,67 +29,13 @@ struct ihm_50c_t
     ihm_50c_state_t state;
 };
 
-// #if DISPLAY_DOUBLE_FB
-// static bool lvgl_port_flush_vsync_ready_callback(esp_lcd_panel_handle_t panel_io, const esp_lcd_rgb_panel_event_data_t *edata, void *user_ctx)
-// {
-//     BaseType_t need_yield = pdFALSE;
-//     ihm_50c_t *ctx = (ihm_50c_t *)user_ctx;
-//     if (ctx->lvgl_task)
-//     {
-//         vTaskNotifyGiveFromISR(ctx->lvgl_task, &need_yield);
-//     }
-//     return (need_yield == pdTRUE);
-// }
-// #endif
-
-// static void lvgl_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
-// {
-//     ihm_50c_t *ctx = (ihm_50c_t *)lv_display_get_user_data(disp);
-
-// #if DISPLAY_DOUBLE_FB
-//     if (lv_display_flush_is_last(disp))
-//     {
-//         esp_lcd_panel_draw_bitmap(ctx->panel_handle, 0, 0, ctx->cfg.display.width, ctx->cfg.display.height, px_map);
-//         ulTaskNotifyValueClear(NULL, ULONG_MAX);
-//         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-//     }
-// #else
-//     esp_lcd_panel_draw_bitmap(ctx->panel_handle, area->x1, area->y1, area->x2 + 1, area->y2 + 1, px_map);
-// #endif
-//     lv_display_flush_ready(disp);
-// }
-
-// static void touchpad_read_cb(lv_indev_t *indev, lv_indev_data_t *data)
-// {
-//     esp_lcd_touch_handle_t tp = (esp_lcd_touch_handle_t)lv_indev_get_user_data(indev);
-
-//     esp_lcd_touch_point_data_t data_point;
-//     uint8_t touchpad_cnt = 0;
-
-//     esp_lcd_touch_read_data(tp);
-//     esp_lcd_touch_get_data(tp, &data_point, &touchpad_cnt, 1);
-
-//     if (touchpad_cnt > 0)
-//     {
-//         data->point.x = data_point.x;
-//         data->point.y = data_point.y;
-//         data->state = LV_INDEV_STATE_PRESSED;
-//     }
-//     else
-//     {
-//         data->state = LV_INDEV_STATE_RELEASED;
-//     }
-//     ESP_LOGI(TAG, "Touch cnt=%d", touchpad_cnt);
-// }
-
-// static void lvgl_tick(void *arg)
-// {
-//     lv_tick_inc(LVGL_TICK_PERIOD_MS);
-// }
-
 ihm_50c_t *ihm_50c_create(void)
 {
-    return calloc(1, sizeof(ihm_50c_t));
+    ihm_50c_t *ctx = calloc(1, sizeof(ihm_50c_t));
+    if (!ctx)
+        ESP_LOGE(TAG, "Falha ao alocar contexto!");
+
+    return ctx;
 }
 
 esp_err_t ihm_50c_backlight_config(ihm_50c_t *ctx,
@@ -130,6 +79,30 @@ esp_err_t ihm_50c_touch_config(ihm_50c_t *ctx,
     ctx->state.touch_ready = true;
 
     return ESP_OK;
+}
+
+static inline uint16_t map(uint16_t n, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max)
+{
+    return (n - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+static void process_coordinates(esp_lcd_touch_handle_t tp, uint16_t *x, uint16_t *y, uint16_t *strength, uint8_t *point_num, uint8_t max_point_num)
+{
+    int32_t nx = (int32_t)*x;
+    int32_t ny = (int32_t)*y;
+
+    if (nx < 0)
+        nx = 0;
+    if (nx >= DISPLAY_WIDTH)
+        nx = DISPLAY_WIDTH - 1;
+
+    if (ny < 0)
+        ny = 0;
+    if (ny >= DISPLAY_HEIGHT)
+        ny = DISPLAY_HEIGHT - 1;
+
+    *x = (uint16_t)nx;
+    *y = (uint16_t)ny;
 }
 
 esp_err_t ihm_50c_display_config(ihm_50c_t *ctx,
@@ -178,13 +151,10 @@ esp_err_t ihm_50c_init(ihm_50c_t *ctx)
         .scl_io_num = ctx->cfg.touch.pin_scl,
         .sda_io_num = ctx->cfg.touch.pin_sda,
         .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = 1,
+        .flags.enable_internal_pullup = 0,
     };
 
-    ESP_RETURN_ON_ERROR(
-        i2c_new_master_bus(&bus_cfg, &ctx->i2c_bus),
-        TAG,
-        "i2c bus");
+    ESP_RETURN_ON_ERROR(i2c_new_master_bus(&bus_cfg, &ctx->i2c_bus), TAG, "i2c bus");
 
     esp_lcd_rgb_panel_config_t panel_config = {
         .data_width = LCD_DATA_WIDTH,
@@ -217,9 +187,7 @@ esp_err_t ihm_50c_init(ihm_50c_t *ctx)
             .vsync_front_porch = LCD_VSYNC_FRONT_PORCH,
             .h_res = ctx->cfg.display.width,
             .v_res = ctx->cfg.display.height,
-            .flags = {
-                .pclk_active_neg = true,
-            },
+            .flags.pclk_active_neg = LCD_PLCK_ACTIVE_NEG,
         },
 
         .dma_burst_size = LCD_DMA_BURST_SIZE,
@@ -249,21 +217,17 @@ esp_err_t ihm_50c_init(ihm_50c_t *ctx)
         },
 
         .disp_gpio_num = GPIO_NUM_NC,
-        .flags = {
-            .fb_in_psram = ctx->cfg.display.use_psram,
-        },
+        .flags.fb_in_psram = ctx->cfg.display.use_psram,
     };
 
-    ESP_RETURN_ON_ERROR(
-        esp_lcd_new_rgb_panel(&panel_config, &ctx->panel_handle),
-        TAG,
-        "panel");
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_reset(ctx->panel_handle),
-                        TAG,
-                        "panel reset");
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_init(ctx->panel_handle),
-                        TAG,
-                        "panel init");
+    ESP_RETURN_ON_ERROR(esp_lcd_new_rgb_panel(&panel_config, &ctx->panel_handle), TAG, "panel");
+
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_reset(ctx->panel_handle), TAG, "panel reset");
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_init(ctx->panel_handle), TAG, "panel init");
+
+    // uint16_t *fb;
+    // esp_lcd_rgb_panel_get_frame_buffer(ctx->panel_handle, 1, (void **)&fb);
+    // memset(fb, 0, DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(uint16_t));
 
     esp_lcd_panel_io_i2c_config_t touch_io_cfg = {
         .dev_addr = ctx->cfg.touch.i2c_addr,
@@ -279,6 +243,18 @@ esp_err_t ihm_50c_init(ihm_50c_t *ctx)
             .disable_control_phase = 1,
         },
     };
+
+    ESP_LOGI(TAG, "Verificando dispositivo no endereco 0x%02x...", ctx->cfg.touch.i2c_addr);
+    esp_err_t probe_err = i2c_master_probe(ctx->i2c_bus, ctx->cfg.touch.i2c_addr, 100);
+    if (probe_err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Nenhum dispositivo encontrado no endereco 0x%02x! Erro: %s",
+                 ctx->cfg.touch.i2c_addr, esp_err_to_name(probe_err));
+    }
+    else
+    {
+        ESP_LOGI(TAG, "GT911 encontrado!");
+    }
 
     ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_i2c(ctx->i2c_bus, &touch_io_cfg, &ctx->touch_io_handle), TAG, "Touch IO fail");
 
@@ -301,47 +277,12 @@ esp_err_t ihm_50c_init(ihm_50c_t *ctx)
             .mirror_y = 0,
         },
         .driver_data = &tp_gt911_config,
-        // .process_coordinates = process_coordinates, // callback to fix coordinates between gt911 and display
+        .process_coordinates = process_coordinates,
         .interrupt_callback = NULL,
     };
 
     ESP_RETURN_ON_ERROR(esp_lcd_touch_new_i2c_gt911(ctx->touch_io_handle, &tp_cfg, &ctx->touch_handle), TAG, "Touch panel init fail");
 
-    ESP_RETURN_ON_ERROR(ledc_set_duty(LEDC_LOW_SPEED_MODE, ctx->cfg.backlight.pwm_channel, ctx->cfg.backlight.pwm_duty), TAG, "ledc_set_duty failed");
-    ESP_RETURN_ON_ERROR(ledc_update_duty(LEDC_LOW_SPEED_MODE, ctx->cfg.backlight.pwm_channel), TAG, "ledc_update_duty failed");
-
-    //     lv_init();
-    //     ctx->lvgl_mutex = xSemaphoreCreateRecursiveMutex();
-    //     ctx->disp = lv_display_create(ctx->cfg.display.width, ctx->cfg.display.height);
-    //     lv_display_set_user_data(ctx->disp, ctx);
-    //     lv_display_set_flush_cb(ctx->disp, lvgl_disp_flush);
-
-    //     ctx->touch_indev = lv_indev_create();
-    //     lv_indev_set_type(ctx->touch_indev, LV_INDEV_TYPE_POINTER);
-    //     lv_indev_set_user_data(ctx->touch_indev, tp_handle);
-    //     lv_indev_set_read_cb(ctx->touch_indev, touchpad_read_cb);
-
-    // #if DISPLAY_DOUBLE_FB
-    // #if DISPLAY_DOUBLE_FB_TEARING
-    //     const esp_lcd_rgb_panel_event_callbacks_t cbs = {
-    //         .on_vsync = lvgl_port_flush_vsync_ready_callback,
-    //     };
-    //     ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(ctx->panel_handle, &cbs, ctx));
-    // #endif
-
-    //     ESP_ERROR_CHECK(esp_lcd_rgb_panel_get_frame_buffer(ctx->panel_handle, 2, &buf1, &buf2));
-    //     lv_display_set_buffers(ctx->disp, buf1, buf2, ctx->cfg.display.width * ctx->cfg.display.height * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_DIRECT);
-
-    // #else
-    //     size_t buffer_size = ctx->cfg.display.width * 30 * sizeof(lv_color_t);
-    //     // buf1 = esp_lcd_rgb_alloc_draw_buffer(ctx->panel_handle, buffer_size, 0); // Future use, currently not in release
-    //     buf1 = heap_caps_malloc(buffer_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    //     lv_display_set_buffers(ctx->disp, buf1, buf2, buffer_size, LV_DISPLAY_RENDER_MODE_PARTIAL);
-    //     const esp_lcd_rgb_panel_event_callbacks_t cbs = {
-    //         .on_color_trans_done = lvgl_port_flush_ready,
-    //     };
-    //     ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(ctx->panel_handle, &cbs, ctx));
-    // #endif
     ctx->state.touch_ready = true;
     ctx->state.initialized = true;
     ctx->state.display_ready = true;
@@ -376,7 +317,7 @@ esp_err_t ihm_50c_deinit(ihm_50c_t *ctx)
     ctx->state.display_ready = false;
     ctx->state.touch_ready = false;
     ctx->state.backlight_ready = false;
-
+    free(ctx);
     return ESP_OK;
 }
 
@@ -430,4 +371,104 @@ esp_lcd_panel_handle_t ihm_50c_get_panel_handle(ihm_50c_t *ctx)
 esp_lcd_touch_handle_t ihm_50c_get_touch_handle(ihm_50c_t *ctx)
 {
     return ctx->touch_handle;
+}
+
+esp_err_t ihm_50c_draw_bitmap(ihm_50c_t *ctx, int x_start, int y_start, int x_end, int y_end, const void *color_data)
+{
+    if (!ctx || !ctx->state.display_ready || !ctx->panel_handle)
+    {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    // ESP_LOGW(TAG, "Drawing bitmap: (%d, %d) - (%d, %d)", x_start, y_start, x_end, y_end);
+
+    if (x_start < 0)
+        x_start = 0;
+    if (y_start < 0)
+        y_start = 0;
+
+    if (x_end > 800)
+        x_end = 800;
+    if (y_end > 480)
+        y_end = 480;
+
+    if (x_start >= x_end || y_start >= y_end)
+    {
+        return ESP_OK;
+    }
+
+    return esp_lcd_panel_draw_bitmap(ctx->panel_handle, x_start, y_start, x_end, y_end, color_data);
+}
+
+esp_err_t ihm_50c_draw_test_pattern(ihm_50c_t *ctx)
+{
+    if (!ctx)
+        return ESP_ERR_INVALID_ARG;
+
+    const int lines_per_block = 20;
+    uint16_t *block_buf = malloc(DISPLAY_WIDTH * lines_per_block * sizeof(uint16_t));
+    if (!block_buf)
+        return ESP_ERR_NO_MEM;
+
+    uint16_t colors[] = {0xF800, 0x07E0, 0x001F, 0xFFFF};
+    int bar_width = DISPLAY_WIDTH / 4;
+
+    ESP_LOGI(TAG, "Filling block buffer with test pattern...");
+    for (int y = 0; y < lines_per_block; y++)
+    {
+        for (int x = 0; x < DISPLAY_WIDTH; x++)
+        {
+            block_buf[y * DISPLAY_WIDTH + x] = colors[x / bar_width];
+        }
+    }
+    ESP_LOGI(TAG, "Drawing test pattern...");
+    for (int y = 0; y < DISPLAY_HEIGHT; y += lines_per_block)
+    {
+        ihm_50c_draw_bitmap(ctx, 0, y, DISPLAY_WIDTH, y + lines_per_block, block_buf);
+    }
+    ESP_LOGI(TAG, "Test pattern drawn.");
+
+    free(block_buf);
+    return ESP_OK;
+}
+esp_err_t ihm_50c_draw_checkerboard(ihm_50c_t *ctx)
+{
+    if (!ctx)
+        return ESP_ERR_INVALID_ARG;
+
+    const int box_size = 40;
+    const int lines_per_block = 40;
+
+    uint16_t *block_buf = malloc(DISPLAY_WIDTH * lines_per_block * sizeof(uint16_t));
+    if (!block_buf)
+        return ESP_ERR_NO_MEM;
+
+    uint16_t color1 = 0xF800; // Vermelho
+    uint16_t color2 = 0x07E0; // Verde
+
+    for (int y_start = 0; y_start < DISPLAY_HEIGHT; y_start += lines_per_block)
+    {
+
+        for (int y = 0; y < lines_per_block; y++)
+        {
+            int global_y = y_start + y;
+            for (int x = 0; x < DISPLAY_WIDTH; x++)
+            {
+                if (((x / box_size) + (global_y / box_size)) % 2 == 0)
+                {
+                    block_buf[y * DISPLAY_WIDTH + x] = color1;
+                }
+                else
+                {
+                    block_buf[y * DISPLAY_WIDTH + x] = color2;
+                }
+            }
+        }
+
+        ihm_50c_draw_bitmap(ctx, 0, y_start, DISPLAY_WIDTH, y_start + lines_per_block, block_buf);
+    }
+    free(block_buf);
+    ESP_LOGI(TAG, "Checkerboard pattern drawn.");
+
+    return ESP_OK;
 }
