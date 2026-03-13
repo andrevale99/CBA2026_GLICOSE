@@ -11,5 +11,5 @@
     "idf.flashType": "UART",
     "idf.portWin": "COM3",
     "idf.currentSetup": "c:\\Espressif\\frameworks\\esp-idf-v5.3.1",
-    "idf.port": "/dev/ttyACM0"
+    "idf.port": "/dev/ttyUSB0"
 }
