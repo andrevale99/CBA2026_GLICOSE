@@ -2,6 +2,9 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
+#define CPU_CORE_0 0
+#define CPU_CORE_1 1
+
 // WiFi configuration parameters
 #define WIFI_MAX_RETRIES 5
 #define WIFI_CRED_MAX_NUM 10
@@ -25,5 +28,16 @@
 
 
 #define PATIENT_DATA_DIR "/spiffs/patients"
+
+// Definições do SD
+
+#define SD_MANAGER_CS_PIN 10
+#define SD_MANAGER_MOSI_PIN 11
+#define SD_MANAGER_MISO_PIN 13
+#define SD_MANAGER_SCLK_PIN 12
+
+// Definicoes dos tamanhos das pilhas das tasks
+#define RTC_TASK_STACK_MEMORY 4096
+#define BLE_TASK_STACK_MEMORY 4096
 
 #endif // _CONFIG_H
