@@ -39,7 +39,7 @@
 #define DISPLAY_TOUCH_I2C_FREQ 400000
 #define DISPLAY_DOUBLE_FB true
 #define DISPLAY_DOUBLE_FB_TEARING true
-#define DISPLAY_USE_BOUNCE_BUFFER true // false 
+#define DISPLAY_USE_BOUNCE_BUFFER true // false
 
 #define LCD_PIN_B0 GPIO_NUM_8
 #define LCD_PIN_B1 GPIO_NUM_3
@@ -64,7 +64,7 @@
 #define LCD_BITS_PER_PIXEL 16
 #define LCD_DMA_BURST_SIZE 64
 #define LCD_PLCK_ACTIVE_NEG true
-#define LCD_PCLK_HZ_NORMAL (16 * 1000000)   
+#define LCD_PCLK_HZ_NORMAL (16 * 1000000)
 // #define LCD_PCLK_HZ_NORMAL (25 * 1000000)
 #define LCD_PCLK_HZ_BOUNCE (18 * 1000000)
 
@@ -96,4 +96,10 @@
 #define LVGL_TASK_PRIORITY 3
 #define LVGL_TICK_PERIOD_MS 2
 
+// DS3231 RTC — barramento I2C dedicado
+// Ajuste os pinos conforme sua ligação física
+#define DS3231_SCL_PIN GPIO_NUM_11
+#define DS3231_SDA_PIN GPIO_NUM_10
+#define DS3231_I2C_PORT 1 // porta diferente do touch (porta 0)
+#define DS3231_I2C_FREQ_HZ 100000
 #endif // _CONFIG_H

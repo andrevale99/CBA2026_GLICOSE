@@ -1,3 +1,22 @@
-idf_component_register(SRCS "ui.c" "ui.c"
-                    INCLUDE_DIRS "include"
-                    REQUIRES ihm_50c lvgl_port config)
+idf_component_register(
+    SRCS
+        "ui.c"
+        "ui_data.c"
+        "ui_styles.c"
+        "ui_widgets.c"
+        "ui_nav.c"
+        "screens/screen_home.c"
+        "screens/screen_alerts.c"
+        "screens/screen_profile.c"
+        "screens/screen_patients.c"
+        "screens/screen_register.c"
+        "screens/screen_config.c"
+    INCLUDE_DIRS
+        "include"
+    REQUIRES
+        lvgl
+        lvgl_port
+        config
+        ds3231
+        spiffs_manager
+)
